@@ -9,6 +9,10 @@ from slowapi.errors import RateLimitExceeded
 
 from .api import ai as ai_routes
 from .api import auth as auth_routes
+from .api import budgets as budgets_routes
+from .api import categories as categories_routes
+from .api import recurring as recurring_routes
+from .api import transactions as transactions_routes
 from .config import get_settings
 from .db import Base, SessionLocal, engine
 from .security.rate_limit import limiter
@@ -46,6 +50,10 @@ def create_app(*, use_lifespan: bool = True) -> FastAPI:
 
     app.include_router(auth_routes.router)
     app.include_router(ai_routes.router)
+    app.include_router(categories_routes.router)
+    app.include_router(transactions_routes.router)
+    app.include_router(budgets_routes.router)
+    app.include_router(recurring_routes.router)
 
     @app.get("/health", tags=["meta"])
     async def health():
