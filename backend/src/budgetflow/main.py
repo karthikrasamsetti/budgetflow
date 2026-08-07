@@ -11,6 +11,7 @@ from .api import ai as ai_routes
 from .api import auth as auth_routes
 from .api import budgets as budgets_routes
 from .api import categories as categories_routes
+from .api import chat as chat_routes
 from .api import recurring as recurring_routes
 from .api import transactions as transactions_routes
 from .config import get_settings
@@ -54,6 +55,7 @@ def create_app(*, use_lifespan: bool = True) -> FastAPI:
     app.include_router(transactions_routes.router)
     app.include_router(budgets_routes.router)
     app.include_router(recurring_routes.router)
+    app.include_router(chat_routes.router)
 
     @app.get("/health", tags=["meta"])
     async def health():
