@@ -9,6 +9,9 @@ export default function Chat() {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const endRef = useRef(null);
+  const [usage, setUsage] = useState(null);
+
+  const loadUsage = () => api.get("/ai/usage").then((r) => setUsage(r.data));
 
   useEffect(() => {
     api.get("/ai/providers").then((r) => {
@@ -16,6 +19,7 @@ export default function Chat() {
       const def = r.data.providers.find((p) => p.is_default);
       setProvider(def?.name || r.data.providers[0]?.name || "");
     });
+    loadUsage();
   }, []);
 
   useEffect(() => {
@@ -40,6 +44,7 @@ export default function Chat() {
         ...m,
         { role: "assistant", content: data.reply, action: data.action, intent: data.intent },
       ]);
+      loadUsage();
     } catch {
       setMsgs((m) => [
         ...m,
@@ -129,6 +134,29 @@ export default function Chat() {
           Send
         </button>
       </form>
+
+      {usage && usage.calls > 0 && (
+        <div
+          className="card"
+          style={{ marginTop: 14, display: "flex", gap: 20, flexWrap: "wrap", fontSize: 13 }}
+        >
+          <span className="eyebrow">Assistant usage</span>
+          <span>
+            <strong>{usage.calls}</strong> calls
+          </span>
+          <span>
+            <strong>{usage.total_tokens.toLocaleString()}</strong> tokens
+          </span>
+          <span>
+            <strong>{usage.avg_latency_ms}</strong> ms avg
+          </span>
+          {Object.entries(usage.by_provider).map(([p, n]) => (
+            <span key={p} className="pill">
+              {p}: {n}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

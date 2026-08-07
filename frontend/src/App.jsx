@@ -4,6 +4,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Transactions from "./pages/Transactions";
 import Budgets from "./pages/Budgets";
+import Goals from "./pages/Goals";
 import Chat from "./pages/Chat";
 
 function Shell({ children }) {
@@ -43,6 +44,9 @@ function Shell({ children }) {
           </NavLink>
           <NavLink to="/budgets" style={link}>
             Budgets
+          </NavLink>
+          <NavLink to="/goals" style={link}>
+            Goals
           </NavLink>
           <NavLink to="/chat" style={link}>
             Assistant
@@ -86,6 +90,7 @@ export default function App() {
       <Route path="/" element={<Protected><Dashboard /></Protected>} />
       <Route path="/transactions" element={<Protected><Transactions /></Protected>} />
       <Route path="/budgets" element={<Protected><Budgets /></Protected>} />
+      <Route path="/goals" element={<Protected><Goals /></Protected>} />
       <Route path="/chat" element={<Protected><Chat /></Protected>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

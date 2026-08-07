@@ -52,9 +52,39 @@ export default function Transactions() {
     setTxs((t) => t.filter((x) => x.id !== id));
   };
 
+  const exportCsv = async () => {
+    const r = await api.get("/export/csv", { responseType: "blob" });
+    const url = URL.createObjectURL(r.data);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "transactions.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const importCsv = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const text = await file.text();
+    await api.post("/import/csv", text, { headers: { "Content-Type": "text/csv" } });
+    e.target.value = "";
+    await load();
+  };
+
   return (
     <div>
-      <h1 style={{ fontSize: 30, marginBottom: 18 }}>Ledger</h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+        <h1 style={{ fontSize: 30 }}>Ledger</h1>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button className="btn ghost small" onClick={exportCsv}>
+            Export CSV
+          </button>
+          <label className="btn ghost small" style={{ margin: 0 }}>
+            Import CSV
+            <input type="file" accept=".csv" onChange={importCsv} style={{ display: "none" }} />
+          </label>
+        </div>
+      </div>
 
       <form
         onSubmit={add}
