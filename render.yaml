@@ -1,0 +1,39 @@
+# Render blueprint. In Render: New > Blueprint, point at this repo.
+# Creates a Postgres database and the FastAPI web service, wired together.
+databases:
+  - name: budgetflow-db
+    databaseName: budgetflow
+    user: budgetflow
+    plan: free
+
+services:
+  - type: web
+    name: budgetflow-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /health
+    # Run migrations, then start the server. $PORT is provided by Render.
+    dockerCommand: sh -c "alembic upgrade head && uvicorn budgetflow.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        # Render supplies a sync postgres URL; the app converts +asyncpg at runtime
+        # via config. We set the async driver form here explicitly.
+        fromDatabase:
+          name: budgetflow-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DEFAULT_AI_PROVIDER
+        value: groq
+      - key: GROQ_API_KEY
+        sync: false # set in the Render dashboard (secret)
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: HF_API_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false # set to your Vercel URL, e.g. ["https://budgetflow.vercel.app"]

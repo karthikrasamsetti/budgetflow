@@ -2,7 +2,7 @@
 
 from functools import lru_cache
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -38,6 +38,18 @@ class Settings(BaseSettings):
 
     # --- CORS ---
     cors_origins: list[str] = ["http://localhost:5173"]
+
+    @field_validator("database_url")
+    @classmethod
+    def _normalize_db_url(cls, v: str) -> str:
+        # Render (and many hosts) provide 'postgres://' or 'postgresql://' URLs.
+        # The app runs async SQLAlchemy, which needs the asyncpg driver form.
+        # Alembic re-derives its own sync URL from this in migrations/env.py.
+        if v.startswith("postgres://"):
+            v = "postgresql://" + v[len("postgres://") :]
+        if v.startswith("postgresql://"):
+            v = "postgresql+asyncpg://" + v[len("postgresql://") :]
+        return v
 
     @property
     def is_sqlite(self) -> bool:
