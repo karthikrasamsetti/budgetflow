@@ -1,0 +1,193 @@
+:root {
+  /* Ledger palette — warm paper, ink teal, ochre accent */
+  --paper: #f4f1e9;
+  --paper-2: #efe9dd;
+  --ink: #12403c;
+  --ink-soft: #3a5b57;
+  --ochre: #e8b04b;
+  --rust: #b8543a; /* expense / over-budget */
+  --green: #2f7d5b; /* income / under-budget */
+  --line: #d8cfba;
+  --muted: #7a7160;
+
+  --display: "Fraunces", Georgia, serif;
+  --body: "Inter", system-ui, sans-serif;
+  --mono: "Spline Sans Mono", ui-monospace, monospace;
+
+  --r: 10px;
+  --gap: 20px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+a {
+  color: var(--ink);
+}
+
+button {
+  font-family: var(--body);
+  cursor: pointer;
+}
+
+/* Money reads as money: tabular, right-aligned, monospaced */
+.money {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.money.neg {
+  color: var(--rust);
+}
+.money.pos {
+  color: var(--green);
+}
+
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Buttons */
+.btn {
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+  padding: 9px 16px;
+  border-radius: var(--r);
+  font-weight: 500;
+  font-size: 14px;
+  transition: transform 0.06s ease, opacity 0.15s ease;
+}
+.btn:hover {
+  opacity: 0.92;
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn.ghost {
+  background: transparent;
+  color: var(--ink);
+}
+.btn.small {
+  padding: 5px 10px;
+  font-size: 13px;
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Inputs */
+input,
+select {
+  font-family: var(--body);
+  font-size: 14px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  width: 100%;
+}
+input:focus,
+select:focus {
+  outline: 2px solid var(--ochre);
+  outline-offset: 1px;
+  border-color: transparent;
+}
+label {
+  font-size: 13px;
+  color: var(--ink-soft);
+  display: block;
+  margin-bottom: 5px;
+}
+
+/* Card — a leaf of ledger paper */
+.card {
+  background: #fbf9f3;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: var(--gap);
+}
+
+/* Ledger table with hairline rules */
+.ledger {
+  width: 100%;
+  border-collapse: collapse;
+}
+.ledger th {
+  text-align: left;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+}
+.ledger td {
+  padding: 11px 10px;
+  border-bottom: 1px solid var(--line);
+}
+.ledger tr:last-child td {
+  border-bottom: none;
+}
+.ledger td.num,
+.ledger th.num {
+  text-align: right;
+}
+
+.pill {
+  display: inline-block;
+  font-size: 12px;
+  padding: 2px 9px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: var(--paper-2);
+  color: var(--ink-soft);
+}
+
+.error {
+  color: var(--rust);
+  font-size: 13px;
+}
+.muted {
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
