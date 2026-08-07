@@ -85,6 +85,18 @@ async def test_chat_nl_add_creates_transaction(client, auth):
     assert len(txs) == 1 and txs[0]["source"] == "ai"
 
 
+async def test_chat_nl_add_uses_today_not_model_date(client, auth):
+    # MockProvider returns a stale 2025-06-15 date; a 'today' message must override it.
+    from datetime import date
+
+    r = await client.post(
+        "/chat", json={"message": "add expense 500 in transport today"}, headers=auth
+    )
+    assert r.status_code == 200
+    txs = (await client.get("/transactions", headers=auth)).json()
+    assert txs[0]["occurred_on"] == date.today().isoformat()
+
+
 async def test_chat_qa_uses_tools(client, auth):
     # Seed a Food expense so the tool has something to report.
     cats = (await client.get("/categories", headers=auth)).json()

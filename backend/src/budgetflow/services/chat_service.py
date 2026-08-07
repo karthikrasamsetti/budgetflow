@@ -14,16 +14,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..ai.categorizer import categorize
 from ..ai.factory import ProviderNotAvailable, get_provider
 from ..ai.logging import logged_call
-from ..ai.parsers import parse_nl_add
+from ..ai.parsers import has_relative_date, parse_nl_add, resolve_relative_date
 from ..ai.router import NL_ADD, QA, route
 from ..ai.tools import TOOL_SCHEMAS, dispatch
 from ..models import ChatSession, Message
 
-_NL_ADD_SYSTEM = (
-    "Extract a transaction from the user message. Respond ONLY with JSON: "
-    '{"amount": number, "kind": "income"|"expense", "occurred_on": "YYYY-MM-DD", '
-    '"category": string|null, "note": string}. No prose, no markdown.'
-)
+
+def _nl_add_system(today: date) -> str:
+    return (
+        f"Today's date is {today.isoformat()}. Resolve relative dates like 'today' "
+        f"and 'yesterday' against it. Extract a transaction from the user message. "
+        'Respond ONLY with JSON: {"amount": number, "kind": "income"|"expense", '
+        '"occurred_on": "YYYY-MM-DD", "category": string|null, "note": string}. '
+        "No prose, no markdown."
+    )
 
 
 class ChatService:
@@ -103,9 +107,10 @@ class ChatService:
     async def _do_nl_add(self, user_id, message, provider, session_id):
         from ..services.transaction_service import TransactionService
 
-        parsed = await self._structured_nl_add(user_id, message, provider, session_id)
+        today = date.today()
+        parsed = await self._structured_nl_add(user_id, message, provider, session_id, today)
         if parsed is None:
-            parsed = parse_nl_add(message)
+            parsed = parse_nl_add(message, today=today)
         if parsed is None:
             return "I couldn't find an amount to record. Try 'spent 500 on food'.", None
 
@@ -115,9 +120,22 @@ class ChatService:
             parsed.get("category_hint") or parsed.get("category"),
             parsed["kind"],
         )
-        occurred = parsed["occurred_on"]
-        if isinstance(occurred, str):
-            occurred = date.fromisoformat(occurred)
+
+        # Resolve the date ourselves. If the message says today/yesterday, that
+        # wins over whatever the model returned (models hallucinate stale dates).
+        if has_relative_date(message):
+            occurred = resolve_relative_date(message, today)
+        else:
+            occurred = parsed["occurred_on"]
+            if isinstance(occurred, str):
+                try:
+                    occurred = date.fromisoformat(occurred)
+                except ValueError:
+                    occurred = today
+            # Guard against implausible dates from the model.
+            if not isinstance(occurred, date) or occurred.year < 2000 or occurred > today:
+                occurred = today
+
         tx = await TransactionService(self.db).create(
             user_id,
             amount=parsed["amount"],
@@ -130,14 +148,16 @@ class ChatService:
         reply = f"Recorded {parsed['kind']} of {parsed['amount']} on {occurred.isoformat()}."
         return reply, {"type": "transaction_created", "transaction_id": tx.id}
 
-    async def _structured_nl_add(self, user_id, message, provider, session_id) -> dict | None:
+    async def _structured_nl_add(
+        self, user_id, message, provider, session_id, today
+    ) -> dict | None:
         """Try provider structured output. Returns parsed dict or None on any failure."""
         try:
             prov = get_provider(provider)
         except ProviderNotAvailable:
             return None
         messages = [
-            {"role": "system", "content": _NL_ADD_SYSTEM},
+            {"role": "system", "content": _nl_add_system(today)},
             {"role": "user", "content": message},
         ]
         try:
@@ -158,7 +178,7 @@ class ChatService:
             return {
                 "amount": Decimal(str(data["amount"])),
                 "kind": data.get("kind", "expense"),
-                "occurred_on": data.get("occurred_on") or date.today().isoformat(),
+                "occurred_on": data.get("occurred_on") or today.isoformat(),
                 "category": data.get("category"),
                 "note": data.get("note") or message,
             }

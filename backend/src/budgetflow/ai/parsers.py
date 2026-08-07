@@ -22,6 +22,17 @@ def _relative_date(text: str, today: date) -> date:
     return today
 
 
+def has_relative_date(text: str) -> bool:
+    """True if the message explicitly anchors a date we should compute ourselves."""
+    t = text.lower()
+    return "today" in t or "yesterday" in t
+
+
+def resolve_relative_date(text: str, today: date | None = None) -> date:
+    """Public resolver for 'today'/'yesterday'; defaults to today."""
+    return _relative_date(text, today or date.today())
+
+
 def parse_nl_add(text: str, *, today: date | None = None) -> dict | None:
     """Best-effort extraction. Returns {amount, kind, occurred_on, category_hint, note}
     or None if no amount is found (nothing to record)."""
