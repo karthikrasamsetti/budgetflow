@@ -20,9 +20,33 @@ export const tokens = {
   },
 };
 
-const api = axios.create({ baseURL: "/" });
+// In dev, VITE_API_BASE is unset and calls go to "/" (Vite proxy forwards them).
+// In production (Vercel), set VITE_API_BASE to the Render backend URL.
+const api = axios.create({ baseURL: import.meta.env.VITE_API_BASE || "/" });
+
+// Cold-start UX: Render's free tier sleeps after inactivity and takes ~30-50s to
+// wake. If any request is slow, broadcast an event so the UI can show a banner.
+let pending = 0;
+let slowTimer = null;
+const emit = (waking) => window.dispatchEvent(new CustomEvent("bf:waking", { detail: waking }));
+
+const startTracking = () => {
+  pending += 1;
+  if (slowTimer === null) {
+    slowTimer = setTimeout(() => emit(true), 2500);
+  }
+};
+const stopTracking = () => {
+  pending = Math.max(0, pending - 1);
+  if (pending === 0) {
+    clearTimeout(slowTimer);
+    slowTimer = null;
+    emit(false);
+  }
+};
 
 api.interceptors.request.use((config) => {
+  startTracking();
   const t = tokens.access;
   if (t) config.headers.Authorization = `Bearer ${t}`;
   return config;
@@ -31,15 +55,19 @@ api.interceptors.request.use((config) => {
 // On 401, try one refresh, then replay the original request.
 let refreshing = null;
 api.interceptors.response.use(
-  (r) => r,
+  (r) => {
+    stopTracking();
+    return r;
+  },
   async (error) => {
+    stopTracking();
     const original = error.config;
     if (error.response?.status === 401 && !original._retried && tokens.refresh) {
       original._retried = true;
       try {
-        refreshing =
-          refreshing ||
-          axios.post("/auth/refresh", { refresh_token: tokens.refresh });
+        // Use `api` (not bare axios) so the request hits the configured backend
+        // base URL in production, not the Vercel origin.
+        refreshing = refreshing || api.post("/auth/refresh", { refresh_token: tokens.refresh });
         const { data } = await refreshing;
         refreshing = null;
         tokens.set(data);

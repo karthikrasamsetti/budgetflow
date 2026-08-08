@@ -1,5 +1,6 @@
 import { NavLink, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
+import WakingBanner from "./components/WakingBanner";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Transactions from "./pages/Transactions";
@@ -82,17 +83,20 @@ function Protected({ children }) {
 export default function App() {
   const { user, ready } = useAuth();
   return (
-    <Routes>
-      <Route
-        path="/login"
-        element={ready && user ? <Navigate to="/" replace /> : <Login />}
-      />
-      <Route path="/" element={<Protected><Dashboard /></Protected>} />
-      <Route path="/transactions" element={<Protected><Transactions /></Protected>} />
-      <Route path="/budgets" element={<Protected><Budgets /></Protected>} />
-      <Route path="/goals" element={<Protected><Goals /></Protected>} />
-      <Route path="/chat" element={<Protected><Chat /></Protected>} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <>
+      <WakingBanner />
+      <Routes>
+        <Route
+          path="/login"
+          element={ready && user ? <Navigate to="/" replace /> : <Login />}
+        />
+        <Route path="/" element={<Protected><Dashboard /></Protected>} />
+        <Route path="/transactions" element={<Protected><Transactions /></Protected>} />
+        <Route path="/budgets" element={<Protected><Budgets /></Protected>} />
+        <Route path="/goals" element={<Protected><Goals /></Protected>} />
+        <Route path="/chat" element={<Protected><Chat /></Protected>} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   );
 }
