@@ -50,11 +50,30 @@ Track income and expenses, set category budgets with alerts, manage recurring tr
 
 ## Screenshots
 
-> _Replace these placeholders with real screenshots (drag images into the GitHub issue/editor, or commit them under `docs/`)._
+### Dashboard
+A month overview — income, spend, and net, with a spend-by-category breakdown and top categories.
 
-| Overview | Ledger | Assistant |
-|---|---|---|
-| _dashboard.png_ | _ledger.png_ | _assistant.png_ |
+![Dashboard](docs/dashboard.png)
+
+### Ledger
+Transactions with inline add and soft delete. AI- and recurring-added entries are tagged.
+
+![Ledger](docs/ledger.png)
+
+### Budgets
+Category budgets with threshold alerts — progress turns ochre at 80% and rust when over.
+
+![Budgets](docs/budgets.png)
+
+### Goals
+Savings goals with progress tracking and contributions.
+
+![Goals](docs/goals.png)
+
+### AI Assistant
+Natural-language add, spending Q&A over your own data, and monthly insights — with a provider switcher and usage stats.
+
+![Assistant](docs/assistant.png)
 
 ---
 
