@@ -6,6 +6,15 @@ from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+def _strip_query_key(url: str, key: str) -> str:
+    """Remove a single ?key=... / &key=... param from a URL, tidily."""
+    import re
+
+    url = re.sub(rf"([?&]){key}=[^&]*&", r"\1", url)  # key in the middle
+    url = re.sub(rf"[?&]{key}=[^&]*$", "", url)  # key at the end
+    return url
+
+
 class Settings(BaseSettings):
     """All runtime config. Every field is overridable via env var or .env."""
 
@@ -54,6 +63,29 @@ class Settings(BaseSettings):
     @property
     def is_sqlite(self) -> bool:
         return self.database_url.startswith("sqlite")
+
+    @property
+    def async_database_url(self) -> str:
+        """URL for the async app engine (asyncpg).
+
+        asyncpg does not accept libpq's '?sslmode=...' query param; it uses a
+        'ssl' connect arg instead (see db.py). Strip sslmode here so the URL
+        parses, and db.py enables SSL via connect_args when it was requested.
+        """
+        url = self.database_url
+        if "sslmode=" in url and "+asyncpg" in url:
+            url = _strip_query_key(url, "sslmode")
+        return url
+
+    @property
+    def require_ssl(self) -> bool:
+        """True when the original URL asked for SSL (Neon and most hosted PG)."""
+        return "sslmode=require" in self.database_url
+
+    @property
+    def sync_database_url(self) -> str:
+        """URL for Alembic's sync engine (psycopg2), which DOES use sslmode."""
+        return self.database_url.replace("+asyncpg", "+psycopg2").replace("+aiosqlite", "")
 
 
 @lru_cache

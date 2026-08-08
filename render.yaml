@@ -1,11 +1,6 @@
 # Render blueprint. In Render: New > Blueprint, point at this repo.
-# Creates a Postgres database and the FastAPI web service, wired together.
-databases:
-  - name: budgetflow-db
-    databaseName: budgetflow
-    user: budgetflow
-    plan: free
-
+# Uses an EXTERNAL Postgres (e.g. Neon) — Render free tier allows only one free
+# database, so we bring our own. Set DATABASE_URL in the dashboard.
 services:
   - type: web
     name: budgetflow-api
@@ -20,11 +15,7 @@ services:
       - key: ENVIRONMENT
         value: production
       - key: DATABASE_URL
-        # Render supplies a sync postgres URL; the app converts +asyncpg at runtime
-        # via config. We set the async driver form here explicitly.
-        fromDatabase:
-          name: budgetflow-db
-          property: connectionString
+        sync: false # paste your Neon connection string in the Render dashboard
       - key: JWT_SECRET
         generateValue: true
       - key: DEFAULT_AI_PROVIDER

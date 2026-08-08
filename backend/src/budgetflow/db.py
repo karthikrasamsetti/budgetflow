@@ -13,11 +13,15 @@ from .config import get_settings
 
 settings = get_settings()
 
-# SQLite needs check_same_thread off for async; Postgres ignores connect_args.
-_connect_args = {"check_same_thread": False} if settings.is_sqlite else {}
+# SQLite needs check_same_thread off for async. For hosted Postgres (Neon),
+# asyncpg takes ssl via connect_args, not a URL param.
+if settings.is_sqlite:
+    _connect_args = {"check_same_thread": False}
+else:
+    _connect_args = {"ssl": True} if settings.require_ssl else {}
 
 engine = create_async_engine(
-    settings.database_url,
+    settings.async_database_url,
     echo=False,
     future=True,
     connect_args=_connect_args,

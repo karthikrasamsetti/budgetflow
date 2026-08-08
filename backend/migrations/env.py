@@ -22,9 +22,8 @@ target_metadata = Base.metadata
 
 
 def _sync_url() -> str:
-    url = get_settings().database_url
-    # Async drivers -> sync equivalents for Alembic.
-    return url.replace("+asyncpg", "+psycopg2").replace("+aiosqlite", "")
+    # psycopg2 understands ?sslmode=require, so we keep the sync URL as-is.
+    return get_settings().sync_database_url
 
 
 def run_migrations_offline() -> None:
